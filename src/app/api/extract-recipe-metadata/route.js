@@ -118,8 +118,10 @@ export async function POST(request) {
         // Clean up the extracted values
         const cleanTime = (timeStr) => {
             if (!timeStr) return '';
+            // Remove PT prefix if present (ISO 8601 duration format)
+            let cleaned = timeStr.replace(/^PT/, '');
             // Remove extra whitespace and normalize
-            return timeStr.replace(/\s+/g, ' ').trim();
+            return cleaned.replace(/\s+/g, ' ').trim();
         };
         
         return Response.json({ 

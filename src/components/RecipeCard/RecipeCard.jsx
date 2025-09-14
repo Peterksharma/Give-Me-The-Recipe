@@ -1,5 +1,5 @@
 "use client";
-import { UsersRound, Clock8, Printer } from "lucide-react";
+import { UsersRound, Clock8, Printer, ChevronDown, ChevronUp } from "lucide-react";
 import React from 'react';
 import { useEffect, useState, useRef } from 'react';
 import { printRecipe } from '@/utils/printUtils';
@@ -61,6 +61,9 @@ export default function RecipeCard({ recipe = null }) {
 
     // Use a default row count, will be updated when card resizes
     const [rowCount, setRowCount] = useState(10);
+    
+    // State for mobile header collapse
+    const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false);
 
     useEffect(() => {
         const updateRowCount = () => {
@@ -88,37 +91,70 @@ export default function RecipeCard({ recipe = null }) {
     const directionLines = createScrollableLines(recipeData.directions, rowCount);
 
     return (
-        <div ref={cardRef} className="w-[60vw] h-[60vh] mx-auto bg-white border border-gray-300 rounded-lg shadow-sm flex flex-col transition-all duration-300 hover:shadow-lg hover:border-gray-400">
+        <div ref={cardRef} className="w-[90vw] min-[450px]:w-[75vw] min-[768px]:w-[70vw] h-[60vh] mx-auto bg-white border border-gray-300 rounded-lg shadow-sm flex flex-col transition-all duration-300 hover:shadow-lg hover:border-gray-400">
             {/* Top Header Section */}
-            <div className="bg-gray-100 px-6 py-4 flex items-center flex-shrink-0 relative">
-                <div className="text-7xl text-gray-700 font-bold text-center w-[30%]" style={{ fontFamily: 'Corinthia, cursive' }}>
-                    Recipe
-                </div>
-                <div className="w-[70%] text-left pl-10">
-                    <h2 className="text-2xl font-bold text-gray-700 uppercase tracking-wide">
-                        {recipeData.title}
-                    </h2>
-                    <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-sm text-gray-600 justify-start">
-                        <span className="flex items-center gap-1 whitespace-nowrap">
-                            <UsersRound className="w-4 h-4" />
-                            SERVES: {recipeData.serves}
-                        </span>
-                        <span className="flex items-center gap-1 whitespace-nowrap">
-                            <Clock8 className="w-4 h-4" />
-                            PREP TIME: {recipeData.prepTime}
-                        </span>
-                        <span className="flex items-center gap-1 whitespace-nowrap">
-                            <Clock8 className="w-4 h-4" />
-                            COOK TIME: {recipeData.cookTime}
-                        </span>
+            <div className="bg-gray-100 flex-shrink-0 relative">
+                {/* Mobile Toggle Button - Only visible on mobile */}
+                <button
+                    onClick={() => setIsHeaderCollapsed(!isHeaderCollapsed)}
+                    className="min-[450px]:hidden w-full px-6 py-4 flex items-center justify-between text-left hover:bg-gray-200 transition-colors"
+                >
+                    <div className="flex-1">
+                        <h2 className="text-lg font-bold text-gray-700 uppercase tracking-wide">
+                            {recipeData.title}
+                        </h2>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Printer 
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handlePrint();
+                            }}
+                            className="w-5 h-5 text-gray-700 hover:text-blue-600 transition-colors"
+                        />
+                        {isHeaderCollapsed ? (
+                            <ChevronDown className="w-5 h-5 text-gray-600" />
+                        ) : (
+                            <ChevronUp className="w-5 h-5 text-gray-600" />
+                        )}
+                    </div>
+                </button>
+
+                {/* Collapsible Content - Hidden on mobile when collapsed */}
+                <div className={`min-[450px]:block transition-all duration-300 overflow-hidden ${
+                    isHeaderCollapsed ? 'max-h-0 min-[450px]:max-h-none' : 'max-h-96 min-[450px]:max-h-none'
+                }`}>
+                    <div className="px-6 py-4 flex items-center">
+                        <div className="hidden min-[450px]:block text-7xl text-gray-700 font-bold text-center w-[25%]" style={{ fontFamily: 'Corinthia, cursive' }}>
+                            Recipe
+                        </div>
+                        <div className="w-full min-[450px]:w-[75%] min-[450px]:pl-6">
+                            <h2 className="hidden min-[450px]:block text-2xl font-bold text-gray-700 uppercase tracking-wide">
+                                {recipeData.title}
+                            </h2>
+                            <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-sm text-gray-600 justify-start">
+                                <span className="flex items-center gap-1 whitespace-nowrap">
+                                    <UsersRound className="w-4 h-4" />
+                                    SERVES: {recipeData.serves}
+                                </span>
+                                <span className="flex items-center gap-1 whitespace-nowrap">
+                                    <Clock8 className="w-4 h-4" />
+                                    PREP TIME: {recipeData.prepTime}
+                                </span>
+                                <span className="flex items-center gap-1 whitespace-nowrap">
+                                    <Clock8 className="w-4 h-4" />
+                                    COOK TIME: {recipeData.cookTime}
+                                </span>
+                            </div>
+                        </div>
+                        <button 
+                            onClick={handlePrint}
+                            className="hidden min-[450px]:block absolute top-4 right-2 p-2 text-gray-700 hover:text-blue-600 transition-colors"
+                        >
+                            <Printer className="w-6 h-6" />
+                        </button>
                     </div>
                 </div>
-                <button 
-                    onClick={handlePrint}
-                    className="absolute top-4 right-6 p-2 text-gray-700 hover:text-blue-600 transition-colors"
-                >
-                    <Printer className="w-6 h-6" />
-                </button>
             </div>
 
             {/* Horizontal separator line */}
@@ -126,9 +162,9 @@ export default function RecipeCard({ recipe = null }) {
 
             {/* Main Content Area */}
             <div ref={contentRef} className="px-6 py-6 flex-1 overflow-y-auto">
-                <div className="flex h-full">
-                    {/* Left Column - Ingredients (30%) */}
-                    <div className="w-[30%] pr-4">
+                <div className="flex flex-col min-[450px]:flex-row h-full">
+                    {/* Left Column - Ingredients (stacked on mobile) */}
+                    <div className="w-full min-[450px]:w-[30%] min-[450px]:pr-4">
                         <h3 className="text-xl font-serif text-gray-700 mb-4 text-center uppercase">
                             Ingredients
                         </h3>
@@ -149,11 +185,11 @@ export default function RecipeCard({ recipe = null }) {
                         </div>
                     </div>
 
-                    {/* Vertical separator line */}
-                    <div className="w-px bg-gray-300 mx-4"></div>
+                    {/* Vertical separator line - hidden on mobile */}
+                    <div className="hidden min-[450px]:block w-px bg-gray-300 mx-4"></div>
 
-                    {/* Right Column - Directions (70%) */}
-                    <div className="w-[70%] pl-4">
+                    {/* Right Column - Directions (stacked on mobile) */}
+                    <div className="w-full min-[450px]:w-[70%] min-[450px]:pt-8 min-[450px]:pl-4">
                         <h3 className="text-xl font-serif text-gray-700 mb-4 text-center uppercase">
                             Directions
                         </h3>
@@ -181,7 +217,7 @@ export default function RecipeCard({ recipe = null }) {
 
             {/* Bottom Footer Section */}
             <div className="bg-white px-6 py-4 text-center flex-shrink-0">
-                <p className="text-sm uppercase font-semibold" style={{ color: '#8B4513' }}>
+                <p className="text-xs min-[450px]:text-sm uppercase font-semibold" style={{ color: '#8B4513' }}>
                     WWW.GIVEMETHERECIPE.APP
                 </p>
             </div>

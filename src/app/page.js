@@ -75,7 +75,7 @@ export default function Home() {
       <Header onSearch={handleRecipeExtract} isLoading={isLoading} />
 
       {/* Main Content Area */}
-      <div className="flex-1 flex items-center justify-center p-8 bg-gray-50">
+      <div className="flex-1 flex items-center justify-center p-4 bg-gray-50">
         {/* Main Content - Recipe Card */}
         <div className="w-full">
           <RecipeCard recipe={recipeData} />

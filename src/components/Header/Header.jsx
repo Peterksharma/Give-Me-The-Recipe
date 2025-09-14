@@ -24,10 +24,10 @@ const Header = ({ onSearch, isLoading }) => {
       <div className="flex flex-col xl:flex-row items-center max-w-9xl mx-auto gap-4 xl:gap-0">
         {/* Left side - Title and tagline */}
         <div className="flex flex-col w-full xl:w-1/3 pl-0 xl:pl-[2vw] min-w-0 text-center xl:text-left">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl xl:text-5xl text-white font-extrabold whitespace-nowrap" style={{ fontFamily: 'Corinthia, cursive' }}>
+          <h1 className="text-4xl min-[450px]:text-2xl sm:text-3xl md:text-4xl xl:text-5xl text-white font-extrabold whitespace-nowrap" style={{ fontFamily: 'Corinthia, cursive' }}>
             Give Me The Recipe
           </h1>
-          <p className="text-yellow-400 text-xs sm:text-sm md:text-base font-medium tracking-[0.3em] whitespace-nowrap">
+          <p className="text-yellow-400 text-sm min-[450px]:text-xs sm:text-sm md:text-base font-medium tracking-[0.3em] whitespace-nowrap">
             Recipe Extractor Website
           </p>
         </div>
@@ -37,7 +37,7 @@ const Header = ({ onSearch, isLoading }) => {
           <form onSubmit={handleSubmit} className="relative w-full max-w-[90vw] xl:max-w-[40vw]">
             <Input
               type="text"
-              placeholder="Enter the URL here to Extract the recipe"
+              placeholder="Enter the URL Here"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               onKeyPress={handleKeyPress}
