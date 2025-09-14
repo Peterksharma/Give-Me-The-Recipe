@@ -2,6 +2,7 @@
 import { UsersRound, Clock8, Printer } from "lucide-react";
 import React from 'react';
 import { useEffect, useState, useRef } from 'react';
+import { printRecipe } from '@/utils/printUtils';
 
 export default function RecipeCard({ recipe = null }) {
     // Default placeholder data
@@ -24,6 +25,11 @@ export default function RecipeCard({ recipe = null }) {
     const cardRef = useRef(null);
     const contentRef = useRef(null);
 
+    // Print function using utility
+    const handlePrint = () => {
+        printRecipe(recipeData);
+    };
+
     // Calculate number of rows based on card's available content height
     const calculateRows = () => {
         if (!contentRef.current) return 10;
@@ -41,6 +47,16 @@ export default function RecipeCard({ recipe = null }) {
             lines.push(items[i] || ""); // Empty string if no content
         }
         return lines;
+    };
+
+    // Create lines that only show actual content when scrolling
+    const createScrollableLines = (items, count) => {
+        // If we have more items than can fit, only show the actual items
+        if (items.length <= count) {
+            return items;
+        }
+        // If we have more items than can fit, show all items (scrollable)
+        return items;
     };
 
     // Use a default row count, will be updated when card resizes
@@ -68,13 +84,13 @@ export default function RecipeCard({ recipe = null }) {
         };
     }, []);
 
-    const ingredientLines = createLines(recipeData.ingredients, rowCount);
-    const directionLines = createLines(recipeData.directions, rowCount);
+    const ingredientLines = createScrollableLines(recipeData.ingredients, rowCount);
+    const directionLines = createScrollableLines(recipeData.directions, rowCount);
 
     return (
         <div ref={cardRef} className="w-[60vw] h-[60vh] mx-auto bg-white border border-gray-300 rounded-lg shadow-sm flex flex-col transition-all duration-300 hover:shadow-lg hover:border-gray-400">
             {/* Top Header Section */}
-            <div className="bg-gray-100 px-6 py-4 flex items-center flex-shrink-0">
+            <div className="bg-gray-100 px-6 py-4 flex items-center flex-shrink-0 relative">
                 <div className="text-7xl text-gray-700 font-bold text-center w-[30%]" style={{ fontFamily: 'Corinthia, cursive' }}>
                     Recipe
                 </div>
@@ -82,22 +98,25 @@ export default function RecipeCard({ recipe = null }) {
                     <h2 className="text-2xl font-bold text-gray-700 uppercase tracking-wide">
                         {recipeData.title}
                     </h2>
-                    <div className="flex space-x-10 mt-2 text-sm text-gray-600 justify-start">
-                        <span className="flex items-center gap-1">
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-sm text-gray-600 justify-start">
+                        <span className="flex items-center gap-1 whitespace-nowrap">
                             <UsersRound className="w-4 h-4" />
                             SERVES: {recipeData.serves}
                         </span>
-                        <span className="flex items-center gap-1">
+                        <span className="flex items-center gap-1 whitespace-nowrap">
                             <Clock8 className="w-4 h-4" />
                             PREP TIME: {recipeData.prepTime}
                         </span>
-                        <span className="flex items-center gap-1">
+                        <span className="flex items-center gap-1 whitespace-nowrap">
                             <Clock8 className="w-4 h-4" />
                             COOK TIME: {recipeData.cookTime}
                         </span>
                     </div>
                 </div>
-                <button className="p-2 text-gray-700 hover:text-blue-600 transition-colors">
+                <button 
+                    onClick={handlePrint}
+                    className="absolute top-4 right-6 p-2 text-gray-700 hover:text-blue-600 transition-colors"
+                >
                     <Printer className="w-6 h-6" />
                 </button>
             </div>
@@ -115,15 +134,16 @@ export default function RecipeCard({ recipe = null }) {
                         </h3>
                         <div className="space-y-2">
                             {ingredientLines.map((ingredient, index) => (
-                                <div key={index} className="border-b border-gray-200 pb-1 h-6">
-                                    <div className="text-sm text-gray-600 leading-[.9rem] h-6 flex items-center" style={{ fontFamily: 'Gaegu, cursive' }}>
+                                <div key={index} className="w-full">
+                                    <div className="text-sm text-gray-600 leading-tight h-auto min-h-[1.5rem] flex items-start" style={{ fontFamily: 'Gaegu, cursive' }}>
                                         {ingredient && (
-                                            <span className="font-semibold text-gray-800 mr-2 min-w-[20px]">
+                                            <span className="font-semibold text-gray-800 mr-2 min-w-[20px] flex-shrink-0">
                                                 {index + 1}.
                                             </span>
                                         )}
-                                        {ingredient}
+                                        <span className="flex-1">{ingredient}</span>
                                     </div>
+                                    <div className="w-full border-b border-gray-200 pb-1"></div>
                                 </div>
                             ))}
                         </div>
@@ -137,17 +157,18 @@ export default function RecipeCard({ recipe = null }) {
                         <h3 className="text-xl font-serif text-gray-700 mb-4 text-center uppercase">
                             Directions
                         </h3>
-                        <div className="space-y-1">
+                        <div className="space-y-2">
                             {directionLines.map((direction, index) => (
-                                <div key={index} className="border-b border-gray-200 pb-1">
-                                    <div className="text-sm text-gray-600 leading-[0.7rem] h-4 flex items-center" style={{ fontFamily: 'Gaegu, cursive' }}>
+                                <div key={index} className="w-full">
+                                    <div className="text-sm text-gray-600 leading-tight h-auto min-h-[1.5rem] flex items-start" style={{ fontFamily: 'Gaegu, cursive' }}>
                                         {direction && (
-                                            <span className="font-semibold text-gray-800 mr-2 min-w-[20px]">
+                                            <span className="font-semibold text-gray-800 mr-2 min-w-[20px] flex-shrink-0">
                                                 {index + 1}.
                                             </span>
                                         )}
-                                        {direction}
+                                        <span className="flex-1">{direction}</span>
                                     </div>
+                                    <div className="w-full border-b border-gray-200 pb-1"></div>
                                 </div>
                             ))}
                         </div>

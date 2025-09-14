@@ -14,8 +14,8 @@ export default function Home() {
     setError(null);
     
     try {
-      // Call all three API endpoints in parallel
-      const [titleResponse, ingredientsResponse, instructionsResponse] = await Promise.all([
+      // Call all four API endpoints in parallel
+      const [titleResponse, ingredientsResponse, instructionsResponse, metadataResponse] = await Promise.all([
         fetch('/api/extract-recipe', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -30,26 +30,32 @@ export default function Home() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ url })
+        }),
+        fetch('/api/extract-recipe-metadata', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url })
         })
       ]);
 
-      const [titleData, ingredientsData, instructionsData] = await Promise.all([
+      const [titleData, ingredientsData, instructionsData, metadataData] = await Promise.all([
         titleResponse.json(),
         ingredientsResponse.json(),
-        instructionsResponse.json()
+        instructionsResponse.json(),
+        metadataResponse.json()
       ]);
 
       // Check if any of the requests failed
-      if (!titleData.success || !ingredientsData.success || !instructionsData.success) {
+      if (!titleData.success || !ingredientsData.success || !instructionsData.success || !metadataData.success) {
         throw new Error('Failed to extract recipe data');
       }
 
       // Combine the data into the format expected by RecipeCard
       const extractedRecipe = {
         title: titleData.title || 'Recipe Title',
-        serves: 'N/A', // Not extracted yet
-        prepTime: 'N/A', // Not extracted yet
-        cookTime: 'N/A', // Not extracted yet
+        serves: metadataData.metadata?.servingCount || 'N/A',
+        prepTime: metadataData.metadata?.prepTime || 'N/A',
+        cookTime: metadataData.metadata?.cookTime || 'N/A',
         ingredients: ingredientsData.ingredients || [],
         directions: instructionsData.instructions || []
       };
