@@ -1,36 +1,104 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Give Me The Recipe (GMTR)
 
-## Getting Started
+A full-stack recipe extraction application that can extract ingredients, instructions, and recipe titles from recipe websites.
 
-First, run the development server:
+## Architecture
 
+- **Frontend**: Next.js with React and Tailwind CSS
+- **Backend**: Express.js server with web scraping capabilities
+- **API Endpoints**: 
+  - `/api/extract-recipe` - Extract recipe title
+  - `/api/extract-ingredients` - Extract ingredients list
+  - `/api/extract-instructions` - Extract cooking instructions
+
+## Quick Start
+
+### Option 1: Build and Run (Production)
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# Install all dependencies
+npm run install-all
+
+# Build the Next.js app and start the server
+npm run build-and-start
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Option 2: Development Mode
+```bash
+# Install all dependencies
+npm run install-all
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+# Run both client and server in development mode
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Manual Setup
 
-## Learn More
+### 1. Install Dependencies
+```bash
+# Root dependencies
+npm install
 
-To learn more about Next.js, take a look at the following resources:
+# Client dependencies
+cd client && npm install
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# Server dependencies
+cd ../server && npm install
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### 2. Build the Application
+```bash
+# Build the Next.js client
+cd client && npm run build
+```
 
-## Deploy on Vercel
+### 3. Start the Server
+```bash
+# Start the Express server
+cd server && npm start
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## API Usage
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Extract Recipe Title
+```bash
+curl -X POST http://localhost:3001/api/extract-recipe \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://example-recipe-site.com/recipe"}'
+```
+
+### Extract Ingredients
+```bash
+curl -X POST http://localhost:3001/api/extract-ingredients \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://example-recipe-site.com/recipe"}'
+```
+
+### Extract Instructions
+```bash
+curl -X POST http://localhost:3001/api/extract-instructions \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://example-recipe-site.com/recipe"}'
+```
+
+## Development
+
+- The client runs on `http://localhost:3000` (Next.js dev server)
+- The server runs on `http://localhost:3001` (Express server)
+- API calls from the client are proxied to the server via Next.js rewrites
+
+## Project Structure
+
+```
+gmtr/
+├── client/                 # Next.js frontend
+│   ├── src/
+│   │   ├── app/           # Next.js app directory
+│   │   ├── components/    # React components
+│   │   └── lib/           # Utility functions
+│   └── out/               # Built static files (generated)
+├── server/                # Express backend
+│   ├── routes/            # API route handlers
+│   ├── utils/             # Utility functions
+│   └── test/              # Test files
+└── package.json           # Root package.json with build scripts
+```

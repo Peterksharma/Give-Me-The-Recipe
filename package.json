@@ -1,23 +1,17 @@
 {
-  "name": "gmtr",
-  "version": "0.1.0",
-  "private": true,
+  "name": "gmtr-fullstack",
+  "version": "1.0.0",
+  "description": "Recipe extraction application with Next.js frontend and Express backend",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
-  },
-  "dependencies": {
-    "react": "19.1.0",
-    "react-dom": "19.1.0",
-    "next": "15.5.3"
+    "build": "cd client && npm run build",
+    "start": "cd server && npm start",
+    "dev": "concurrently \"cd client && npm run dev\" \"cd server && npm run dev\"",
+    "dev:client": "cd client && npm run dev",
+    "dev:server": "cd server && npm run dev",
+    "install-all": "npm install && cd client && npm install && cd ../server && npm install",
+    "build-and-start": "npm run build && npm run start"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4",
-    "tailwindcss": "^4",
-    "eslint": "^9",
-    "eslint-config-next": "15.5.3",
-    "@eslint/eslintrc": "^3"
+    "concurrently": "^8.2.2"
   }
 }
