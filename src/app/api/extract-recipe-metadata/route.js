@@ -1,17 +1,14 @@
-const express = require('express');
-const axios = require('axios');
-const cheerio = require('cheerio');
-const router = express.Router();
+import axios from 'axios';
+import * as cheerio from 'cheerio';
 
-// Recipe metadata extraction endpoint
-router.post('/extract-recipe-metadata', async (req, res) => {
-    const { url } = req.body;
-    
-    if (!url) {
-        return res.status(400).json({ error: 'URL is required' });
-    }
-    
+export async function POST(request) {
     try {
+        const { url } = await request.json();
+        
+        if (!url) {
+            return Response.json({ error: 'URL is required' }, { status: 400 });
+        }
+        
         // Fetch the webpage
         const response = await axios.get(url, {
             headers: {
@@ -125,7 +122,7 @@ router.post('/extract-recipe-metadata', async (req, res) => {
             return timeStr.replace(/\s+/g, ' ').trim();
         };
         
-        res.json({ 
+        return Response.json({ 
             success: true, 
             message: 'Recipe metadata extracted successfully',
             url: url,
@@ -137,11 +134,9 @@ router.post('/extract-recipe-metadata', async (req, res) => {
         });
         
     } catch (error) {
-        res.status(500).json({ 
+        return Response.json({ 
             error: 'Failed to extract recipe metadata',
             details: error.message 
-        });
+        }, { status: 500 });
     }
-});
-
-module.exports = router;
+}
