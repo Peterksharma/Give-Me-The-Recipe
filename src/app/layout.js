@@ -1,4 +1,4 @@
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Corinthia, Gaegu } from "next/font/google";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -11,43 +11,19 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-// Add Corinthia font
-const corinthia = {
+// Script face for the "Recipe" / site wordmark
+const corinthia = Corinthia({
   variable: "--font-corinthia",
-  style: "normal",
   weight: ["400", "700"],
-  src: [
-    {
-      path: "https://fonts.gstatic.com/s/corinthia/v1/Corinthia-Regular.ttf",
-      weight: "400",
-      style: "normal",
-    },
-    {
-      path: "https://fonts.gstatic.com/s/corinthia/v1/Corinthia-Bold.ttf", 
-      weight: "700",
-      style: "normal",
-    },
-  ],
-};
+  subsets: ["latin"],
+});
 
-// Add Gaegu font
-const gaegu = {
+// Handwriting face for the card's ingredient and direction lines
+const gaegu = Gaegu({
   variable: "--font-gaegu",
-  style: "normal",
   weight: ["300", "400", "700"],
-  src: [
-    {
-      path: "https://fonts.gstatic.com/s/gaegu/v1/gaegu-regular.ttf",
-      weight: "400",
-      style: "normal",
-    },
-    {
-      path: "https://fonts.gstatic.com/s/gaegu/v1/gaegu-bold.ttf",
-      weight: "700", 
-      style: "normal",
-    },
-  ],
-};
+  subsets: ["latin"],
+});
 
 export const metadata = {
   title: "Give Me The Recipe",
@@ -57,18 +33,8 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <head>
-        <link
-          href="https://fonts.googleapis.com/css2?family=Corinthia:wght@400;700&family=Gaegu:wght@300;400;700&display=swap"
-          rel="stylesheet"
-        />
-      </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-        style={{ 
-          '--font-corinthia': 'Corinthia, cursive',
-          '--font-gaegu': 'Gaegu, cursive'
-        }}
+        className={`${geistSans.variable} ${geistMono.variable} ${corinthia.variable} ${gaegu.variable} antialiased`}
       >
         {children}
       </body>

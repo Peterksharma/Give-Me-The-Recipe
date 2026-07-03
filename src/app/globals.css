@@ -120,3 +120,43 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* --- Recipe card motion ------------------------------------------- */
+/* The card is "dealt" onto the table when a recipe arrives… */
+@keyframes card-deal {
+  from {
+    opacity: 0;
+    transform: translateY(14px) rotate(-0.6deg);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* …and its lines are written in with a slight stagger. */
+@keyframes line-write {
+  from {
+    opacity: 0;
+    transform: translateX(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.animate-card-deal {
+  animation: card-deal 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-line-write {
+  animation: line-write 0.35s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-card-deal,
+  .animate-line-write {
+    animation: none;
+  }
+}

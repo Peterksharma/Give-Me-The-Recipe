@@ -1,66 +1,54 @@
 "use client";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Header from '@/components/Header/Header';
 import RecipeCard from '@/components/RecipeCard/RecipeCard';
+import RecentTray from '@/components/RecentTray/RecentTray';
 import Footer from '@/components/Footer/Footer';
+import { loadRecents, addRecent, removeRecent, clearRecents } from '@/utils/recentRecipes';
 
 export default function Home() {
+  const [url, setUrl] = useState('');
   const [recipeData, setRecipeData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [recents, setRecents] = useState([]);
+  const [trayOpen, setTrayOpen] = useState(false);
 
-  const handleRecipeExtract = async (url) => {
+  const handleRecipeExtract = async (targetUrl) => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
-      // Call all four API endpoints in parallel
-      const [titleResponse, ingredientsResponse, instructionsResponse, metadataResponse] = await Promise.all([
-        fetch('/api/extract-recipe', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url })
-        }),
-        fetch('/api/extract-ingredients', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url })
-        }),
-        fetch('/api/extract-instructions', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url })
-        }),
-        fetch('/api/extract-recipe-metadata', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url })
-        })
-      ]);
+      // One endpoint fetches the page once and returns the whole recipe
+      const response = await fetch('/api/extract-recipe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: targetUrl })
+      });
+      const data = await response.json();
 
-      const [titleData, ingredientsData, instructionsData, metadataData] = await Promise.all([
-        titleResponse.json(),
-        ingredientsResponse.json(),
-        instructionsResponse.json(),
-        metadataResponse.json()
-      ]);
-
-      // Check if any of the requests failed
-      if (!titleData.success || !ingredientsData.success || !instructionsData.success || !metadataData.success) {
-        throw new Error('Failed to extract recipe data');
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Failed to extract recipe data');
       }
 
-      // Combine the data into the format expected by RecipeCard
-      const extractedRecipe = {
-        title: titleData.title || 'Recipe Title',
-        serves: metadataData.metadata?.servingCount || 'N/A',
-        prepTime: metadataData.metadata?.prepTime || 'N/A',
-        cookTime: metadataData.metadata?.cookTime || 'N/A',
-        ingredients: ingredientsData.ingredients || [],
-        directions: instructionsData.instructions || []
-      };
+      // Map to the shape expected by RecipeCard; sourceUrl feeds the
+      // share deep link.
+      setRecipeData({
+        title: data.title || 'Recipe Title',
+        serves: data.serves || 'N/A',
+        prepTime: data.prepTime || 'N/A',
+        cookTime: data.cookTime || 'N/A',
+        ingredients: data.ingredients || [],
+        directions: data.instructions || [],
+        sourceUrl: data.url
+      });
 
-      setRecipeData(extractedRecipe);
+      // Remember the lookup for the recent-recipes tray.
+      setRecents((prev) => addRecent(prev, { url: targetUrl, title: data.title || targetUrl }));
+
+      // Reflect the recipe in the address bar so the page itself is a
+      // shareable link.
+      window.history.replaceState(null, '', `/?recipe=${encodeURIComponent(targetUrl)}`);
     } catch (err) {
       setError(err.message);
       console.error('Error extracting recipe:', err);
@@ -69,27 +57,61 @@ export default function Home() {
     }
   };
 
+  // A shared link arrives as /?recipe=<url>: load that recipe on mount.
+  // History is also read here — localStorage only exists client-side.
+  useEffect(() => {
+    setRecents(loadRecents());
+    const shared = new URLSearchParams(window.location.search).get('recipe');
+    if (shared) {
+      setUrl(shared);
+      handleRecipeExtract(shared);
+    }
+  }, []);
+
+  const handleSelectRecent = (recentUrl) => {
+    setTrayOpen(false);
+    setUrl(recentUrl);
+    handleRecipeExtract(recentUrl);
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Header */}
-      <Header onSearch={handleRecipeExtract} isLoading={isLoading} />
+      <Header
+        url={url}
+        onUrlChange={setUrl}
+        onSearch={handleRecipeExtract}
+        isLoading={isLoading}
+        onOpenRecents={() => setTrayOpen(true)}
+      />
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex items-center justify-center p-8 bg-gray-50">
-        {/* Main Content - Recipe Card */}
-        <div className="w-full">
-          <RecipeCard recipe={recipeData} />
-          {error && (
-            <div className="text-center mt-4">
-              <p className="text-red-600 bg-red-100 p-4 rounded-lg inline-block">
-                Error: {error}
-              </p>
-            </div>
-          )}
-        </div>
+      <RecentTray
+        open={trayOpen}
+        recents={recents}
+        onClose={() => setTrayOpen(false)}
+        onSelect={handleSelectRecent}
+        onRemove={(recentUrl) => setRecents((prev) => removeRecent(prev, recentUrl))}
+        onClear={() => setRecents(clearRecents())}
+      />
+
+      {/* The card grows with its content; the page scrolls. A faint
+          graph-paper grid gives the card something to sit against. */}
+      <div
+        className="flex-1 flex justify-center p-4 sm:p-8 bg-[#EFEDE7]"
+        style={{
+          backgroundImage:
+            'linear-gradient(to right, rgba(30, 58, 138, 0.055) 1px, transparent 1px), ' +
+            'linear-gradient(to bottom, rgba(30, 58, 138, 0.055) 1px, transparent 1px)',
+          backgroundSize: '24px 24px'
+        }}
+      >
+        <RecipeCard
+          key={recipeData ? recipeData.sourceUrl : 'empty'}
+          recipe={recipeData}
+          isLoading={isLoading}
+          error={error}
+        />
       </div>
 
-      {/* Footer */}
       <Footer />
     </div>
   );
