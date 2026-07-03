@@ -1,62 +1,71 @@
-import axios from 'axios';
-import * as cheerio from 'cheerio';
+import { gotScraping } from 'got-scraping';
+import { extractRecipe } from '@/utils/recipeExtractor';
 
+/**
+ * POST /api/extract-recipe
+ *
+ * Fetches the given URL once and returns the complete extracted recipe:
+ * { title, serves, prepTime, cookTime, ingredients, instructions, source }.
+ * The extraction itself lives in src/utils/recipeExtractor.js.
+ *
+ * The page is fetched with got-scraping rather than a plain HTTP client:
+ * it impersonates a real browser's TLS fingerprint and header ordering,
+ * which is what large recipe publishers (AllRecipes, Budget Bytes, …)
+ * fingerprint to reject non-browser requests.
+ */
 export async function POST(request) {
+    const { url } = await request.json().catch(() => ({}));
+
+    if (!url) {
+        return Response.json({ error: 'URL is required' }, { status: 400 });
+    }
     try {
-        const { url } = await request.json();
-        
-        if (!url) {
-            return Response.json({ error: 'URL is required' }, { status: 400 });
-        }
-        
-        // Fetch the webpage
-        const response = await axios.get(url, {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-            }
+        new URL(url);
+    } catch {
+        return Response.json({ error: 'Invalid URL' }, { status: 400 });
+    }
+
+    try {
+        const response = await gotScraping({
+            url,
+            timeout: { request: 20000 },
+            retry: { limit: 1 },
         });
-        
-        const $ = cheerio.load(response.data);
-        
-        // Try to extract recipe title from various common selectors
-        let recipeTitle = '';
-        
-        // Common recipe title selectors
-        const titleSelectors = [
-            'h1[class*="recipe"]',
-            'h1[class*="title"]',
-            '.recipe-title',
-            '.recipe-name',
-            'h1',
-            'title'
-        ];
-        
-        for (const selector of titleSelectors) {
-            const titleElement = $(selector).first();
-            if (titleElement.length > 0) {
-                recipeTitle = titleElement.text().trim();
-                if (recipeTitle) {
-                    break;
-                }
-            }
+
+        const recipe = extractRecipe(response.body);
+
+        if (recipe.ingredients.length === 0 && recipe.instructions.length === 0) {
+            return Response.json(
+                { error: 'Could not find a recipe on that page' },
+                { status: 422 }
+            );
         }
-        
-        // If no title found, use the page title
-        if (!recipeTitle) {
-            recipeTitle = $('title').text().trim();
-        }
-        
-        return Response.json({ 
-            success: true, 
-            message: 'Recipe title extracted successfully',
-            url: url,
-            title: recipeTitle
-        });
-        
+
+        return Response.json({ success: true, url, ...recipe });
     } catch (error) {
-        return Response.json({ 
-            error: 'Failed to extract recipe title',
-            details: error.message 
-        }, { status: 500 });
+        // Distinguish "the site refused us" from a genuine server bug, so
+        // the client can show an actionable message.
+        const status = error.response?.statusCode;
+        if (status) {
+            const blocked = status === 403 || status === 429;
+            return Response.json(
+                {
+                    error: blocked
+                        ? 'That site is blocking automated access (HTTP ' + status + ')'
+                        : 'That site responded with HTTP ' + status,
+                },
+                { status: 502 }
+            );
+        }
+        if (error.name === 'TimeoutError') {
+            return Response.json(
+                { error: 'That site took too long to respond' },
+                { status: 504 }
+            );
+        }
+        return Response.json(
+            { error: 'Failed to extract recipe', details: error.message },
+            { status: 500 }
+        );
     }
 }

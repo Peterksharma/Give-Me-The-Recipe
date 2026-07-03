@@ -4,8 +4,10 @@ const nextConfig = {
   trailingSlash: true,
   images: {
     unoptimized: true
-  }
-  // Remove the rewrites since we're using API routes now
+  },
+  // got-scraping reads its header-fingerprint data files from disk at
+  // runtime, so it must stay external — bundling it breaks those paths.
+  serverExternalPackages: ['got-scraping']
 };
 
 export default nextConfig;
