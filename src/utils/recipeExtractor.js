@@ -89,23 +89,36 @@ const durationPhrase = (text) => {
     return match ? match[0].replace(/\s+/g, ' ').trim() : '';
 };
 
-/** A serving count, keeping ranges intact: "4 to 6 servings" → "4 to 6". */
+/**
+ * A serving count, keeping ranges and mixed numbers intact:
+ * "4 to 6 servings" → "4 to 6"; "2-1/2 dozen" → "2-1/2 dozen".
+ */
 const servingPhrase = (text) => {
-    const match = String(text).match(/\d+\s*(?:(?:to|-|–)\s*\d+)?/);
+    const match = String(text).match(/\d+(?:\s*(?:to|-|–)\s*\d+)?(?:\/\d+)?(?:\s*dozen)?/i);
     return match ? match[0].replace(/\s+/g, ' ').trim() : '';
 };
 
 /**
- * Render an ISO-8601 duration ("PT1H30M") as "1 hr 30 min".
- * Non-ISO input is returned untouched, so human-written times pass through.
+ * Render an ISO-8601 duration as "1 hr 30 min".
+ * Accepts the full grammar sites actually publish, including
+ * zero-padded forms like "P0Y0M0DT0H20M0.000S" (Food Network).
+ * Zero durations render as '' (so the UI can fall back to N/A);
+ * non-ISO input is returned untouched, so human-written times pass.
  */
 const formatDuration = (value) => {
     if (typeof value !== 'string') return '';
-    const match = value.match(/^P(?:(\d+)D)?T?(?:(\d+)H)?(?:(\d+)M)?/i);
-    if (!match || (!match[1] && !match[2] && !match[3])) return value.trim();
-    const [, days, hours, minutes] = match;
+    const match = value.trim().match(
+        /^P(?:[\d.]+Y)?(?:[\d.]+M)?(?:[\d.]+W)?(?:([\d.]+)D)?(?:T(?:([\d.]+)H)?(?:([\d.]+)M)?(?:[\d.]+S)?)?$/i
+    );
+    if (!match) return value.trim();
+    const days = parseFloat(match[1] || 0);
+    let hours = parseFloat(match[2] || 0);
+    let minutes = Math.round(parseFloat(match[3] || 0));
+    // Normalize "PT180M" → 3 hr, not 180 min.
+    hours += Math.floor(minutes / 60);
+    minutes %= 60;
     const parts = [];
-    if (days) parts.push(`${days} day${days === '1' ? '' : 's'}`);
+    if (days) parts.push(`${days} day${days === 1 ? '' : 's'}`);
     if (hours) parts.push(`${hours} hr`);
     if (minutes) parts.push(`${minutes} min`);
     return parts.join(' ');
